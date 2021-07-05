@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+import time
 import struct
 import board
 import digitalio
@@ -20,7 +22,19 @@ nrf = RF24(spi, csn, ce)
 
 # set the Power Amplifier level to -12 dBm since this test example is
 # usually run with nRF24L01 transceivers in close proximity
-nrf.pa_level = -12
+# Power Levels:  (-18 lowest .. 0 highest)
+# Lets try -6, and can boost to 0 if needed
+nrf.pa_level = -6
+
+# set datarate
+# 1 = 1 Mbps (default)
+# 2 = 2 Mbps high speed and lower range
+# 250 = 250 Kbps long range (only works on NRF24L01+ PLUS variants)
+nrf.data_rate = 250
+
+# set channel
+# Valid input is [0,125] default channel is 76.  We agreed to channel 97
+nrf.channel = 97
 
 # addresses needs to be in a buffer protocol object (bytearray)
 address = [b"1Node", b"2Node"]
@@ -49,9 +63,10 @@ def master(count=5):  # count = 5 will only transmit 5 packets
     """Transmits an incrementing integer every second"""
     nrf.listen = False  # ensures the nRF24L01 is in TX mode
 
+    buffer = input("Write your message here: ").encode("UTF-8")
+
     while count:
-        buffer = b"Hello World\0" + str(count)
-        start_timer = time.monotonic_ns()  # start timer
+        start_timer = time.monotonic_ns()  # start time
         result = nrf.send(buffer)
         end_timer = time.monotonic_ns()  # end timer
         if not result:
@@ -60,7 +75,8 @@ def master(count=5):  # count = 5 will only transmit 5 packets
             print(
                 "Transmission successful! Time to Transmit: "
                 "{} us. Sent: {}".format(
-                    (end_timer - start_timer) / 1000
+                    (
+end_timer - start_timer) / 1000, buffer
                 )
             )
         time.sleep(1)
@@ -91,3 +107,6 @@ def slave(timeout=6):
 
     # recommended behavior is to keep in TX mode while idle
     nrf.listen = False  # put the nRF24L01 is in TX mode
+
+master()
+
