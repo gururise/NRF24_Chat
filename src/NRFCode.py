@@ -8,6 +8,9 @@ import digitalio
 # from circuitpython_nrf24l01.rf24_lite import RF24
 from circuitpython_nrf24l01.rf24 import RF24
 
+# Constants
+TRANSMIT_INTERVAL = 1
+
 # change these (digital output) pins accordingly
 ce = digitalio.DigitalInOut(board.D4)
 csn = digitalio.DigitalInOut(board.D5)
@@ -65,7 +68,7 @@ def master(count=5):  # count = 5 will only transmit 5 packets
 
     buffer = input("Write your message here: ").encode("UTF-8")
 
-    while count:
+    while count and (len(buffer) > 0):
         start_timer = time.monotonic_ns()  # start time
         result = nrf.send(buffer)
         end_timer = time.monotonic_ns()  # end timer
@@ -75,11 +78,11 @@ def master(count=5):  # count = 5 will only transmit 5 packets
             print(
                 "Transmission successful! Time to Transmit: "
                 "{} us. Sent: {}".format(
-                    (
-end_timer - start_timer) / 1000, buffer
+                    ( end_timer - start_timer) / 1000, buffer
                 )
             )
-        time.sleep(1)
+        # retransmit interval is 1 second
+        time.sleep(TRANSMIT_INTERVAL)
         count -= 1
 
 
